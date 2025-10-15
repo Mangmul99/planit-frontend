@@ -1,20 +1,28 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { login } from '../services/authService'
+import { useAuth } from '../hooks/useAuth'
 import FormField from '../components/ui/FormField'
 import Button from '../components/ui/Button'
 
-// Login: 클라이언트 localStorage를 이용한 목업 로그인
+// Login: Backend API를 이용한 로그인
 export default function Login(){
   const [email,setEmail] = useState('')
   const [pw,setPw] = useState('')
+  const [errorMsg, setErrorMsg] = useState('')
   const nav = useNavigate()
   const loc = useLocation()
-  const submit = (e)=>{
+  const { login, loading, error } = useAuth()
+
+  const submit = async (e)=>{
     e.preventDefault()
-    login(email, pw)
-    const back = loc.state?.from || '/'
-    nav(back, { replace: true })
+    setErrorMsg('')
+    try {
+      await login(email, pw)
+      const back = loc.state?.from || '/'
+      nav(back, { replace: true })
+    } catch (err) {
+      setErrorMsg(error || '로그인에 실패했습니다.')
+    }
   }
   return (
     <div className="min-h-dvh grid place-items-center p-12 px-4">
@@ -37,7 +45,10 @@ export default function Login(){
             onChange={e=>setPw(e.target.value)}
             required
           />
-          <Button variant="primary" type="submit" className="w-full h-11 !text-sm !font-semibold tracking-wide">로그인</Button>
+          {errorMsg && <div className="text-red-500 text-xs">{errorMsg}</div>}
+          <Button variant="primary" type="submit" disabled={loading} className="w-full h-11 !text-sm !font-semibold tracking-wide">
+            {loading ? '로그인 중...' : '로그인'}
+          </Button>
         </div>
       </form>
     </div>

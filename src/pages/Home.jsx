@@ -4,7 +4,6 @@ import CalMini from '../components/CalMini'
 import dayjs from 'dayjs'
 import { useState } from 'react'
 import { addEvent, listByMonth, listEvents, removeEvent, updateEvent } from '../services/eventService'
-import { saveTrip } from '../services/storageService'
 import Button from '../components/ui/Button'
 import Empty from '../components/ui/Empty'
 import Badge from '../components/ui/Badge'
@@ -148,3 +147,4 @@ function MemoList({dateKey, onEdit, onDelete}){
     </div>
   )
 }
+
