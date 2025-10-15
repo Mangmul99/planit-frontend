@@ -1,10 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-<<<<<<< HEAD
-import { getUser, logout } from '../services/authService'
-=======
 import { useAuth } from '../hooks/useAuth'
 import { useTrip } from '../hooks/useTrip'
->>>>>>> e6c0bf28795f2d824bce2b4d96d71bf693530b03
 import { useState, useEffect } from 'react'
 import Popover from './Popover'
 import dayjs from 'dayjs'
