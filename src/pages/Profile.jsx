@@ -1,19 +1,38 @@
 import Card from '../components/Card'
-import { getUser, updateProfile } from '../services/authService'
-import { useState, useRef } from 'react'
+import { useAuth } from '../hooks/useAuth'
+import { useState, useRef, useEffect } from 'react'
 import FormField from '../components/ui/FormField'
 import Button from '../components/ui/Button'
 
 // Profile : 닉네임/아바타 편집
 export default function Profile(){
-  const init = getUser()
-  const [name, setName] = useState(init?.name||'')
-  const [avatar, setAvatar] = useState(init?.avatar||'')
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [avatar, setAvatar] = useState('')
   const [avatarFileName, setAvatarFileName] = useState('')
   const fileRef = useRef()
-  const save = ()=>{
-    updateProfile({ name, avatar })
-    alert('저장되었습니다')
+  const { getCurrentUser, updateUser, loading, error } = useAuth()
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const user = await getCurrentUser()
+        setName(user.username || '')
+        setEmail(user.email || '')
+      } catch (err) {
+        console.error('사용자 정보 조회 실패:', err)
+      }
+    }
+    fetchUser()
+  }, [])
+
+  const save = async ()=>{
+    try {
+      await updateUser({ username: name })
+      alert('저장되었습니다')
+    } catch (err) {
+      alert('저장에 실패했습니다: ' + (error || '알 수 없는 오류'))
+    }
   }
   const onUpload = (f)=>{
     if(!f) return

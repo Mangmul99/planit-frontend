@@ -1,9 +1,9 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { getUser, logout } from '../services/authService'
-import { useState } from 'react'
+import { useAuth } from '../hooks/useAuth'
+import { useTrip } from '../hooks/useTrip'
+import { useState, useEffect } from 'react'
 import Popover from './Popover'
 import dayjs from 'dayjs'
-import { listTrips } from '../services/storageService'
 import { getWeather } from '../services/weatherService'
 import Button from './ui/Button'
 
@@ -11,8 +11,24 @@ import Button from './ui/Button'
 export default function Layout(){
   const loc = useLocation()
   const nav = useNavigate()
-  const user = getUser()
+  const [user, setUser] = useState(null)
   const [openBell, setOpenBell] = useState(false)
+  const { getCurrentUser, logout } = useAuth()
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem('access_token')
+      if (token) {
+        try {
+          const userData = await getCurrentUser()
+          setUser(userData)
+        } catch (err) {
+          console.error('사용자 정보 조회 실패:', err)
+        }
+      }
+    }
+    fetchUser()
+  }, [loc.pathname])
   return (
     <div className="grid h-screen overflow-hidden" style={{gridTemplateColumns: '280px 1fr'}}>
       <aside className="px-5 py-6 bg-gradient-sidebar backdrop-blur border-r border-primary-dark/12 relative overflow-hidden">
@@ -52,9 +68,9 @@ export default function Layout(){
               </Popover>
               {user ? (
                 <div className="flex gap-3 items-center">
-                  <div className="w-10 h-10 rounded-full bg-gradient-primary grid place-items-center font-semibold text-white cursor-pointer transition border-2 border-emerald-500/20 hover:scale-105" onClick={()=>nav('/profile')}>{user.name?.[0]?.toUpperCase()||'U'}</div>
+                  <div className="w-10 h-10 rounded-full bg-gradient-primary grid place-items-center font-semibold text-white cursor-pointer transition border-2 border-emerald-500/20 hover:scale-105" onClick={()=>nav('/profile')}>{user.username?.[0]?.toUpperCase()||user.email?.[0]?.toUpperCase()||'U'}</div>
                   <div className="flex flex-col leading-tight">
-                    <div className="font-semibold text-text">{user.name || 'Anni'}</div>
+                    <div className="font-semibold text-text">{user.username || user.email || 'User'}</div>
                   </div>
                   <Button variant="inverse" onClick={()=>{ logout(); nav('/login') }}>로그아웃</Button>
                 </div>
@@ -73,20 +89,31 @@ export default function Layout(){
 // 여행 일정과 날씨 정보를 합쳐 알림 목록 생성
 function BellContent(){
   const [items, setItems] = useState([])
-  useState(()=>{
-    const trips = listTrips()
-    const now = dayjs()
-    const tripNotis = trips.map(t=>{
-      const d = dayjs(t.start)
-      const diff = d.diff(now,'day')
-      return { text: `여행 "${t.name}" D${diff>=0?'-'+diff:'+'+Math.abs(diff)}` }
-    })
-    getWeather('Seoul').then(w=>{
-      const rain = (w.main||'').toLowerCase().includes('rain')
-      const wx = rain ? [{ text: '오늘 비 소식 — 우산을 챙기세요.' }] : []
-      setItems([{ text:'알림' , head:true }, ...tripNotis, ...wx])
-    })
-  })
+  const { getTripsByUser } = useTrip()
+  const { getCurrentUser } = useAuth()
+
+  useEffect(()=>{
+    const fetchNotifications = async () => {
+      try {
+        const user = await getCurrentUser()
+        const trips = await getTripsByUser(user.id)
+        const now = dayjs()
+        const tripNotis = trips.map(t=>{
+          const d = dayjs(t.start_date || t.start)
+          const diff = d.diff(now,'day')
+          return { text: `여행 "${t.title || t.name}" D${diff>=0?'-'+diff:'+'+Math.abs(diff)}` }
+        })
+        const w = await getWeather('Seoul')
+        const rain = (w.main||'').toLowerCase().includes('rain')
+        const wx = rain ? [{ text: '오늘 비 소식 — 우산을 챙기세요.' }] : []
+        setItems([{ text:'알림' , head:true }, ...tripNotis, ...wx])
+      } catch (err) {
+        console.error('알림 조회 실패:', err)
+        setItems([{ text:'알림' , head:true }])
+      }
+    }
+    fetchNotifications()
+  }, [])
   return (
     <div>
       {items.map((n,i)=> n.head?
