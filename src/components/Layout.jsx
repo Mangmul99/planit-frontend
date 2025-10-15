@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getUser, logout } from '../services/authService'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Popover from './Popover'
 import dayjs from 'dayjs'
 import { listTrips } from '../services/storageService'
@@ -36,6 +36,19 @@ export default function Layout(){
             <span className="w-5 text-center text-lg" aria-hidden>🗣️</span>
             <span>커뮤니티</span>
           </NavLink>
+          <NavLink to="/cities" className={({isActive})=> isActive
+            ? 'no-underline px-4 py-3 rounded-xl transition-all duration-200 relative overflow-hidden flex gap-3 items-center font-semibold text-white shadow-button bg-gradient-primary'
+            : 'no-underline px-4 py-3 rounded-xl transition-all duration-200 relative overflow-hidden flex gap-3 items-center font-medium text-sidebar-link hover:bg-emerald-500/15 hover:translate-x-1'}>
+            <span className="w-5 text-center text-lg" aria-hidden>🏙️</span>
+            <span>도시</span>
+          </NavLink>
+
+          <NavLink to="/places" className={({isActive})=> isActive
+          ? 'no-underline px-4 py-3 rounded-xl transition-all duration-200 relative overflow-hidden flex gap-3 items-center font-semibold text-white shadow-button bg-gradient-primary'
+          : 'no-underline px-4 py-3 rounded-xl transition-all duration-200 relative overflow-hidden flex gap-3 items-center font-medium text-sidebar-link hover:bg-emerald-500/15 hover:translate-x-1'}>
+          <span className="w-5 text-center text-lg" aria-hidden>📍</span>
+         <span>장소</span>
+         </NavLink>
         </nav>
       </aside>
       <div className="flex flex-col h-screen overflow-hidden">
@@ -73,7 +86,7 @@ export default function Layout(){
 // 여행 일정과 날씨 정보를 합쳐 알림 목록 생성
 function BellContent(){
   const [items, setItems] = useState([])
-  useState(()=>{
+  useEffect(()=>{
     const trips = listTrips()
     const now = dayjs()
     const tripNotis = trips.map(t=>{
@@ -89,9 +102,9 @@ function BellContent(){
   })
   return (
     <div>
-      {items.map((n,i)=> n.head?
-        <div key={i} className="text-sm font-medium text-text-soft mb-2 flex items-center gap-2">{n.text}</div> :
-        <div key={i} className="p-3 rounded-xl bg-surface mb-2 last:mb-0 border border-primary-dark/10">{n.text}</div>
+      {items.map((n,i)=> n.head
+      ?<div key={i} className="text-sm font-medium text-text-soft mb-2 flex items-center gap-2">{n.text}</div> 
+      :<div key={i} className="p-3 rounded-xl bg-surface mb-2 last:mb-0 border border-primary-dark/10">{n.text}</div>
       )}
     </div>
   )
